@@ -56,8 +56,13 @@
             <includes>
 <!--              <include>GetTokenTest.java</include>-->
 <!--              <include>GetWeatherDataTest.java</include>-->
-              <include>*Test.java</include>
+              <include>IzaanSchoolAPITest.java</include>
             </includes>
+            <excludes>
+              <exclude>GetWeatherDataTest.java</exclude>
+              <exclude>GetWeatherDataTest1.java</exclude>
+            </excludes>
+
 <!--            <suiteXmlFiles>-->
 <!--              <suiteXmlFile>target/test-classes/REST_API_Test_Runner.xml</suiteXmlFile>-->
 <!--            </suiteXmlFiles>-->

@@ -5,7 +5,7 @@
     <test name = "Ecommerce Home">
         <classes>
             <class name="com.izaanschool.GetWeatherData1Test"/>
-            <class name="com.izaanschool.GetTokenTest"/>
+            <class name="base.GetTokenTest"/>
         </classes>
     </test>
 
