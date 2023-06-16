@@ -1,1 +1,7 @@
-com/izaanschool/App.class
+handler\IzaanSchoolAPITest.class
+handler\RunnerClass.class
+handler\LambdaHandler.class
+handler\GetWeatherDataTest.class
+handler\Base.class
+handler\GetWeatherData1Test.class
+com\izaanschool\App.class

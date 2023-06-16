@@ -1,10 +1,11 @@
-package com.izaanschool;
+package handler;
 
-import base.Base;
-import io.restassured.response.*;
+import io.restassured.response.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import static io.restassured.RestAssured.given;
@@ -33,7 +34,7 @@ public class IzaanSchoolAPITest {
                 .then()
                 .extract().response();
         String message = response.jsonPath() .getString("message");
-        System.out.println("test ran -"+message);
+        System.out.println("response is -"+message);
         logger.info(message);
         Assert.assertEquals(200, response.statusCode());
     }
