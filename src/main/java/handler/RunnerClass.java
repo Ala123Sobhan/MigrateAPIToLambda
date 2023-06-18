@@ -21,7 +21,24 @@ public class RunnerClass {
         try {
             TestNG testng = new TestNG();
             testng.setTestClasses(new Class[]{DummyAPITest.class});
-            testng.run();
+            testng.run() ;
+            //TestNG testng = new TestNG();
+//			testng.setTestClasses(new Class[]{DummyAPITest.class});
+//
+//			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//			PrintStream printStream = new PrintStream(outputStream);
+//			System.setOut(printStream);
+//			System.setErr(printStream);
+//
+//
+//			testng.run();
+//
+//			// Get the captured logs
+//			String logs = outputStream.toString();
+//
+//			// Return the logs as part of the response
+//			return logs;
+
 
 
         }catch(Exception e)

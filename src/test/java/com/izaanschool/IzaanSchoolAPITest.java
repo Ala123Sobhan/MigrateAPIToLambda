@@ -10,7 +10,7 @@ import org.junit.rules.TestName;
 import static io.restassured.RestAssured.given;
 
 public class IzaanSchoolAPITest {
-    private static final Logger logger = LogManager.getLogger(GetWeatherDataTest.class);
+
     @Rule
     public TestName name = new TestName();
 
@@ -34,7 +34,7 @@ public class IzaanSchoolAPITest {
                 .extract().response();
         String message = response.jsonPath() .getString("message");
         System.out.println("test ran -"+message);
-        logger.info(message);
+
         Assert.assertEquals(200, response.statusCode());
     }
 }

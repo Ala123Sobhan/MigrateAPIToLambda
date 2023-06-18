@@ -1,7 +1,8 @@
+handler\LambdaHandler$TestResultListener.class
 handler\RunnerClass.class
 handler\LambdaHandler.class
 handler\DummyAPITest.class
 handler\location.class
 handler\AddAPlace.class
-handler\Base.class
+handler\LambdaHandler$1.class
 com\izaanschool\App.class
