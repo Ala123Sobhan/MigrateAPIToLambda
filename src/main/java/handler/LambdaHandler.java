@@ -8,25 +8,37 @@ import org.testng.ITestContext;
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
 import org.testng.TestNG;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 import software.amazon.awssdk.services.ses.model.Destination;
+import software.amazon.awssdk.utils.IoUtils;
+
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 
 public class LambdaHandler implements RequestHandler<Object, String> {
-
-
 
 	final String S3_BUCKET_NAME = "api-tests-logs";
 	final String SENDER_EMAIL_ADDRESS = "ala123sobhan@gmail.com";
@@ -158,8 +170,10 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 		// Retrieve the log file content from S3
 		String logFileContent = getLogFileContentFromS3(logKey);
 
+		String presignedUrl = getPresignedUrl(S3_BUCKET_NAME,logKey);
 		// Generate the email body with attachment
-		String emailBody = getEmailBodyWithAttachment(logKey, logFileContent, executionLogs);
+		String emailBody = getEmailBodyWithAttachment(logKey, logFileContent, executionLogs, presignedUrl);
+
 
 		// Create the email request
 		SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
@@ -174,6 +188,42 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 		// Send the email with the log file attachment
 		sesClient.sendEmail(sendEmailRequest);
 	}
+
+	public static String getPresignedUrl(String bucketName, String keyName ) {
+
+		String myURL = null;
+		try {
+
+			ProfileCredentialsProvider credentialsProvider = ProfileCredentialsProvider.create();
+			Region region = Region.US_WEST_2;
+			String profileName = "ala123sobhan";
+			S3Presigner presigner = S3Presigner.builder()
+					.region(region)
+					.credentialsProvider(DefaultCredentialsProvider.builder()
+							.profileName(profileName)
+							.build())
+					.build();
+
+			GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+					.bucket(bucketName)
+					.key(keyName)
+					.build();
+
+			GetObjectPresignRequest getObjectPresignRequest = GetObjectPresignRequest.builder()
+					.signatureDuration(Duration.ofMinutes(60))
+					.getObjectRequest(getObjectRequest)
+					.build();
+
+			PresignedGetObjectRequest presignedGetObjectRequest = presigner.presignGetObject(getObjectPresignRequest);
+			myURL = presignedGetObjectRequest.url().toString();
+			System.out.println("Presigned URL: " + myURL);
+
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return myURL;
+	}
+
 
 
 	private String getLogFileContentFromS3(String logKey) {
@@ -203,11 +253,11 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 		return null; // or throw an exception if desired
 	}
 
-	private String getEmailBodyWithAttachment(String logKey, String logFileContent, String executionLogs) {
+	private String getEmailBodyWithAttachment(String logKey, String logFileContent, String executionLogs, String presignedUrl) {
 		// Your code here to generate email body with attachment
 		//return EMAIL_BODY;
 		String emailBody = "Please find attached the test results log file."+"\n\n"+logFileContent
-				+"\n\n\n\n"+executionLogs;
+				+"\n\n\n\n"+executionLogs+"\n\n"+"presigned_url:\n"+presignedUrl;
 		return emailBody;
 	}
 
