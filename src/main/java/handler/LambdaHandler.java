@@ -92,7 +92,7 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 					.key(s3key)
 					.build();
 
-			PutObjectResponse putObjectResponse = s3Client.putObject(putObjectRequest, RequestBody.fromString(testResults));
+			PutObjectResponse putObjectResponse = s3Client.putObject(putObjectRequest, RequestBody.fromString(testResults+"\n\n\n"+executionLogs));
 			//return "Tests run successfully! Test results logged to S3: " + putObjectResponse.eTag();
 
 			//return "tests run successfully "+"\n"+logs;
