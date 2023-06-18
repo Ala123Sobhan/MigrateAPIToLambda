@@ -1,6 +1,8 @@
 handler\LambdaHandler$TestResultListener.class
+handler\LibraryApiTest.class
 handler\RunnerClass.class
 handler\LambdaHandler.class
+handler\Payload.class
 handler\DummyAPITest.class
 handler\location.class
 handler\AddAPlace.class

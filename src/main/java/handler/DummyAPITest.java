@@ -20,7 +20,7 @@ public class DummyAPITest {
     @Test
     public void testAddPlaceGoogleApi() {
 
-
+        System.out.println("testAddPlaceGoogleApi:");
         AddAPlace ap = new AddAPlace();
         location l = new location();
         l.setLat(-38.383494);

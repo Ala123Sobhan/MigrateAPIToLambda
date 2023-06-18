@@ -40,6 +40,7 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 
 		String s3key = null;
 		String executionLogs = null;
+		TestResultListener resultListener = null;
 
 		try {
 
@@ -58,7 +59,7 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 			runner.setTestSuites(suitefiles);
 
 			// Create a custom TestListener to capture the test results
-			TestResultListener resultListener = new TestResultListener();
+			 resultListener = new TestResultListener();
 
 			// Add the custom listener to TestNG
 			runner.addListener(resultListener);
@@ -89,6 +90,7 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 			System.out.println(e.getMessage());
 			//return "Error occurred during test execution";
 		}finally {
+			if(resultListener.isTestFailed())
 			sendEmailWithAttachment(s3key, executionLogs);
 		}
 			return "Done running the tests and sending email";
@@ -107,25 +109,27 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 
 		private StringBuilder testResultsBuilder = new StringBuilder();
 
+		boolean testFailed = false;
 		@Override
 		public void onTestStart(ITestResult result) {
 			// Log test start event
 			String testName = result.getName();
-			testResultsBuilder.append("Test Start: ").append(testName).append("\n");
+			testResultsBuilder.append("Test Start: ").append(testName).append("\n\n");
 		}
 
 		@Override
 		public void onTestSuccess(ITestResult result) {
 			// Log test success event
 			String testName = result.getName();
-			testResultsBuilder.append("Test Success: ").append(testName).append("\n");
+			testResultsBuilder.append("Test Success: ").append(testName).append("\n\n");
 		}
 
 		@Override
 		public void onTestFailure(ITestResult result) {
 			// Log test failure event
 			String testName = result.getName();
-			testResultsBuilder.append("Test Failure: ").append(testName).append("\n");
+			testResultsBuilder.append("Test Failure: ").append(testName).append("\n\n");
+			testFailed = true;
 		}
 
 		@Override
@@ -139,6 +143,10 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 
 		public String getTestResults() {
 			return testResultsBuilder.toString();
+		}
+
+		public boolean isTestFailed() {
+			return testFailed;
 		}
 	}
 
