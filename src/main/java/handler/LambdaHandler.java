@@ -2,6 +2,9 @@ package handler;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.Status;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.testng.ITestContext;
@@ -21,16 +24,11 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 import software.amazon.awssdk.services.ses.model.Destination;
-import software.amazon.awssdk.utils.IoUtils;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -40,7 +38,7 @@ import java.util.UUID;
 
 public class LambdaHandler implements RequestHandler<Object, String> {
 
-	final String S3_BUCKET_NAME = "api-tests-logs";
+	static final String S3_BUCKET_NAME = "api-tests-logs";
 	final String SENDER_EMAIL_ADDRESS = "ala123sobhan@gmail.com";
 	final String RECIPIENT_EMAIL_ADDRESS = "alasobhan.work@gmail.com";
 	final String EMAIL_SUBJECT = "Test Results Log";
@@ -121,12 +119,18 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 
 		private StringBuilder testResultsBuilder = new StringBuilder();
 
+		ExtentReports extent = ExtentReporter.getReportObject();
+		ExtentTest test;
+		ThreadLocal <ExtentTest> extentTest = new ThreadLocal<ExtentTest>();
+
 		boolean testFailed = false;
 		@Override
 		public void onTestStart(ITestResult result) {
 			// Log test start event
 			String testName = result.getName();
 			testResultsBuilder.append("Test Start: ").append(testName).append("\n\n");
+			test = extent.createTest(result.getMethod().getMethodName());
+			extentTest.set(test);
 		}
 
 		@Override
@@ -134,6 +138,8 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 			// Log test success event
 			String testName = result.getName();
 			testResultsBuilder.append("Test Success: ").append(testName).append("\n\n");
+			extentTest.get().log(Status.PASS, "Test Passed");
+
 		}
 
 		@Override
@@ -142,6 +148,8 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 			String testName = result.getName();
 			testResultsBuilder.append("Test Failure: ").append(testName).append("\n\n");
 			testFailed = true;
+			extentTest.get().fail(result.getThrowable());
+
 		}
 
 		@Override
@@ -151,6 +159,8 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 			testResultsBuilder.append("Pass: ").append(context.getPassedTests().size()).append("\n");
 			testResultsBuilder.append("Fail: ").append(context.getFailedTests().size()).append("\n");
 			testResultsBuilder.append("Skip: ").append(context.getSkippedTests().size()).append("\n");
+			extent.flush();
+			ExtentReporter.uploadFile();
 		}
 
 		public String getTestResults() {
@@ -170,9 +180,10 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 		// Retrieve the log file content from S3
 		String logFileContent = getLogFileContentFromS3(logKey);
 
-		String presignedUrl = getPresignedUrl(S3_BUCKET_NAME,logKey);
+		String logPresignedUrl = getPresignedUrl(S3_BUCKET_NAME,logKey);
+		String reportPresignedUrl = getPresignedUrl(S3_BUCKET_NAME, ExtentReporter.s3key);
 		// Generate the email body with attachment
-		String emailBody = getEmailBodyWithAttachment(logKey, logFileContent, executionLogs, presignedUrl);
+		String emailBody = getEmailBodyWithAttachment(logKey, logFileContent, executionLogs, logPresignedUrl,reportPresignedUrl);
 
 
 		// Create the email request
@@ -253,11 +264,15 @@ public class LambdaHandler implements RequestHandler<Object, String> {
 		return null; // or throw an exception if desired
 	}
 
-	private String getEmailBodyWithAttachment(String logKey, String logFileContent, String executionLogs, String presignedUrl) {
+	private String getEmailBodyWithAttachment(String logKey, String logFileContent, String executionLogs, String presignedUrl1,
+											  String presignedUrl2) {
 		// Your code here to generate email body with attachment
 		//return EMAIL_BODY;
 		String emailBody = "Please find attached the test results log file."+"\n\n"+logFileContent
-				+"\n\n\n\n"+executionLogs+"\n\n"+"presigned_url:\n"+presignedUrl;
+				+"\n\n\n\n"+
+				//executionLogs+"\n\n"+
+				"Log presigned url:\n"+presignedUrl1+"\n\n"+"Report presigned url:"+
+				presignedUrl2;
 		return emailBody;
 	}
 

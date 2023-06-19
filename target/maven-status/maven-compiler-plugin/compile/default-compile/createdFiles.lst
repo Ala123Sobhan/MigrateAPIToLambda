@@ -6,5 +6,6 @@ handler\Payload.class
 handler\DummyAPITest.class
 handler\location.class
 handler\AddAPlace.class
+handler\ExtentReporter.class
 handler\LambdaHandler$1.class
 com\izaanschool\App.class
