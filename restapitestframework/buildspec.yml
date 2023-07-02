@@ -8,7 +8,7 @@ phases:
     commands:
       - mvn package
       - sam package
-        --template-file template.yaml
+        --template-file restapitestframework/template.yaml
         --s3-bucket ala123sobhanbucket
         --output-template-file packaged-template.yml
 artifacts:
